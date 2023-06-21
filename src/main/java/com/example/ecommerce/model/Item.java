@@ -14,8 +14,6 @@ public class Item {
     private int quantity;
     private String description;
     private String category;
-    
-    
     private String url ;
     
     public Item() {

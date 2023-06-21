@@ -1,6 +1,13 @@
 package com.example.ecommerce.controller;
 
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,12 +16,19 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.ecommerce.model.User;
 import com.example.ecommerce.service.UserService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
 
 @CrossOrigin
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
+    private final String secretKey = "yourSecretKey"; // Replace with your own secret key
+
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
@@ -70,4 +84,63 @@ public class UserController {
         userService.changePassword(id, newPassword);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody User user, HttpServletResponse response) {
+        try {
+            User existingUser = userService.getUserByUsername(user.getUserName());
+
+            if (existingUser != null) {
+                if (existingUser.getPassword().equals(user.getPassword())) {
+                    String token = generateToken(existingUser.getUserName());
+
+                    response.addHeader("Authorization", "Bearer " + token);
+
+                    Map<String, String> responseBody = new HashMap<>();
+                    responseBody.put("username", existingUser.getUserName());
+                    responseBody.put("authorization", "Bearer " + token);
+                    responseBody.put("userId", existingUser.getId());
+
+                    return ResponseEntity.ok(responseBody);
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Collections.singletonMap("error", "Invalid password"));
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("error", "User not found"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Internal Server Error"));
+        }
+    }
+
+    private String generateToken(String username) {
+    try {
+
+        long expirationTime = 3600000;
+
+        Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+
+        JwtBuilder builder = Jwts.builder()
+                .setClaims(claims)
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(signingKey);
+
+        String token = builder.compact();
+
+        System.out.println("Generated token: " + token);
+
+        return token;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return null;
+    }
 }
+}
+
