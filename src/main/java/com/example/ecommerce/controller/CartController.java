@@ -109,18 +109,6 @@ public class CartController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Cart> updateCart(@PathVariable String id, @RequestBody Cart cart) {
-        Optional<Cart> existingCart = cartService.getCartById(id);
-        if (existingCart.isPresent()) {
-            cart.setId(id);
-            Cart updatedCart = cartService.updateCart(cart);
-            return ResponseEntity.ok(updatedCart);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
     @DeleteMapping("/{userId}/{itemId}")
     public ResponseEntity<Void> deleteCartItem(@PathVariable String userId, @PathVariable String itemId) {
         Optional<Cart> existingCart = cartService.getCartByUserId(userId);
@@ -128,12 +116,9 @@ public class CartController {
         if (existingCart.isPresent()) {
             Cart userCart = existingCart.get();
 
-            Optional<CartItem> cartItemToDelete = userCart.getCartItems().stream()
-                    .filter(item -> item.getItemId().equals(itemId))
-                    .findFirst();
+            boolean removed = userCart.getCartItems().removeIf(item -> item.getItemId().equals(itemId));
 
-            if (cartItemToDelete.isPresent()) {
-                userCart.getCartItems().remove(cartItemToDelete.get());
+            if (removed) {
                 cartService.updateCart(userCart);
                 return ResponseEntity.noContent().build();
             } else {
@@ -144,11 +129,20 @@ public class CartController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCart(@PathVariable String id) {
-        boolean deleted = cartService.deleteCart(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
+    @PostMapping("/{userId}/checkout")
+    public ResponseEntity<Void> checkoutCart(@PathVariable String userId) {
+        Optional<Cart> existingCart = cartService.getCartByUserId(userId);
+
+        if (existingCart.isPresent()) {
+            Cart userCart = existingCart.get();
+
+            // Perform the necessary operations for checkout, such as updating inventory, creating an order, etc.
+
+            // Clear the cart after successful checkout
+            userCart.getCartItems().clear();
+            cartService.updateCart(userCart);
+
+            return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();
         }

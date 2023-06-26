@@ -23,8 +23,8 @@ public class CartService {
         return cartRepository.findAll();
     }
 
-    public Optional<Cart> getCartById(String id) {
-        return cartRepository.findById(id);
+    public Optional<Cart> getCartByUserId(String userId) {
+        return cartRepository.findByUserId(userId);
     }
 
     public Cart createCart(Cart cart) {
@@ -33,20 +33,6 @@ public class CartService {
 
     public Cart updateCart(Cart cart) {
         return cartRepository.save(cart);
-    }
-
-    public boolean deleteCart(String id) {
-        Optional<Cart> cartOptional = cartRepository.findById(id);
-        if (cartOptional.isPresent()) {
-            cartRepository.deleteById(id);
-            return true; // Deleted
-        } else {
-            return false; // 404
-        }
-    }
-
-    public Optional<Cart> getCartByUserId(String userId) {
-        return cartRepository.findByUserId(userId);
     }
 
     public void deleteCartByUserId(String userId) {

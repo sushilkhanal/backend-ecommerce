@@ -27,7 +27,11 @@ import io.jsonwebtoken.security.Keys;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    private final String secretKey = "yourSecretKey"; // Replace with your own secret key
+    private final String secretKey = "rhkg38yw4w4rhjg83m4y7x9gw"; // Replace with your own secret key
+
+    public String getSecretKey() {
+        return secretKey;
+    }
 
     @Autowired
     public UserController(UserService userService) {
